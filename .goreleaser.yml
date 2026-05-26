@@ -1,0 +1,49 @@
+version: 2
+
+project_name: handoff
+
+builds:
+  - main: .
+    binary: handoff
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+brews:
+  - repository:
+      owner: Dborasik
+      name: homebrew-tap
+    name: handoff
+    homepage: "https://github.com/Dborasik/handoff"
+    description: "Transfer knowledge between AI agent sessions"
+    license: "MIT"
+    install: |
+      bin.install "handoff"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: Dborasik
+    name: handoff
