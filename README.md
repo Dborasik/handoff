@@ -62,21 +62,21 @@ The agent reads these on every session automatically.
 | Cursor | `.cursor/rules/handoff.mdc` | [`instructions/cursor.mdc`](instructions/cursor.mdc) |
 
 ```bash
-BASE=https://raw.githubusercontent.com/Dborasik/handoff/main/instructions
-
 # GitHub Copilot
 mkdir -p .github
-curl -fsSL $BASE/copilot-instructions.md -o .github/copilot-instructions.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/instructions/copilot-instructions.md \
+  -o .github/copilot-instructions.md
 
 # Claude Code
-curl -fsSL $BASE/CLAUDE.md -o CLAUDE.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/instructions/CLAUDE.md -o CLAUDE.md
 
 # OpenAI Codex
-curl -fsSL $BASE/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/instructions/AGENTS.md -o AGENTS.md
 
 # Cursor
 mkdir -p .cursor/rules
-curl -fsSL $BASE/cursor.mdc -o .cursor/rules/handoff.mdc
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/instructions/cursor.mdc \
+  -o .cursor/rules/handoff.mdc
 ```
 
 ### Option B — Skill file (on-demand)
@@ -90,19 +90,20 @@ A skill is loaded by the agent only when relevant — lighter weight, and works 
 | `.claude/skills/handoff/SKILL.md` | Claude Code |
 
 ```bash
-BASE=https://raw.githubusercontent.com/Dborasik/handoff/main
-
 # GitHub Copilot
 mkdir -p .github/skills/handoff
-curl -fsSL $BASE/.github/skills/handoff/SKILL.md -o .github/skills/handoff/SKILL.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.github/skills/handoff/SKILL.md \
+  -o .github/skills/handoff/SKILL.md
 
 # OpenAI Codex and other agents
 mkdir -p .agents/skills/handoff
-curl -fsSL $BASE/.agents/skills/handoff/SKILL.md -o .agents/skills/handoff/SKILL.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.agents/skills/handoff/SKILL.md \
+  -o .agents/skills/handoff/SKILL.md
 
 # Claude Code
 mkdir -p .claude/skills/handoff
-curl -fsSL $BASE/.claude/skills/handoff/SKILL.md -o .claude/skills/handoff/SKILL.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.claude/skills/handoff/SKILL.md \
+  -o .claude/skills/handoff/SKILL.md
 ```
 
 Once in place, the agent will automatically check for existing packages at the start of each session and offer to store context when things get long.
