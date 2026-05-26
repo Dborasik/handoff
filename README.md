@@ -46,43 +46,63 @@ go build -o handoff .
 
 ## Configuring Your Agent
 
-`handoff` works with any AI coding agent. To teach your agent how and when to use it, add the appropriate instruction file to your project. These files tell the agent to check for existing context at session start, proactively offer to store transfers, and use the correct command syntax.
+All agent instruction files live in [`instructions/`](instructions/) and [`*/skills/handoff/`](.github/skills/handoff/) — organized, versioned, and curl-able. Drop whichever file your agent needs into your own project.
 
-| Agent | File to add to your project |
-|-------|-----------------------------|
-| GitHub Copilot | `.github/copilot-instructions.md` |
-| Claude Code | `CLAUDE.md` |
-| OpenAI Codex | `AGENTS.md` |
-| Cursor | `.cursor/rules/handoff.mdc` |
+There are two approaches:
 
-Download whichever you need — all files are in this repo and contain identical instructions:
+### Option A — Always-on instructions
+
+The agent reads these on every session automatically.
+
+| Agent | Add this file to your project | Source |
+|-------|-------------------------------|--------|
+| GitHub Copilot | `.github/copilot-instructions.md` | [`instructions/copilot-instructions.md`](instructions/copilot-instructions.md) |
+| Claude Code | `CLAUDE.md` | [`instructions/CLAUDE.md`](instructions/CLAUDE.md) |
+| OpenAI Codex | `AGENTS.md` | [`instructions/AGENTS.md`](instructions/AGENTS.md) |
+| Cursor | `.cursor/rules/handoff.mdc` | [`instructions/cursor.mdc`](instructions/cursor.mdc) |
 
 ```bash
+BASE=https://raw.githubusercontent.com/Dborasik/handoff/main/instructions
+
 # GitHub Copilot
 mkdir -p .github
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.github/copilot-instructions.md \
-  -o .github/copilot-instructions.md
+curl -fsSL $BASE/copilot-instructions.md -o .github/copilot-instructions.md
 
 # Claude Code
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/CLAUDE.md -o CLAUDE.md
+curl -fsSL $BASE/CLAUDE.md -o CLAUDE.md
 
 # OpenAI Codex
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/AGENTS.md -o AGENTS.md
+curl -fsSL $BASE/AGENTS.md -o AGENTS.md
 
 # Cursor
 mkdir -p .cursor/rules
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.cursor/rules/handoff.mdc \
-  -o .cursor/rules/handoff.mdc
+curl -fsSL $BASE/cursor.mdc -o .cursor/rules/handoff.mdc
 ```
 
-Or grab all four at once:
+### Option B — Skill file (on-demand)
+
+A skill is loaded by the agent only when relevant — lighter weight, and works across all providers that support the `skills/<name>/SKILL.md` convention.
+
+| Location in your project | Supported by |
+|--------------------------|-------------|
+| `.github/skills/handoff/SKILL.md` | GitHub Copilot, general agents |
+| `.agents/skills/handoff/SKILL.md` | General agents |
+| `.claude/skills/handoff/SKILL.md` | Claude Code |
 
 ```bash
-mkdir -p .github .cursor/rules
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.github/copilot-instructions.md -o .github/copilot-instructions.md
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/CLAUDE.md -o CLAUDE.md
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/AGENTS.md -o AGENTS.md
-curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.cursor/rules/handoff.mdc -o .cursor/rules/handoff.mdc
+BASE=https://raw.githubusercontent.com/Dborasik/handoff/main
+
+# GitHub Copilot / general
+mkdir -p .github/skills/handoff
+curl -fsSL $BASE/.github/skills/handoff/SKILL.md -o .github/skills/handoff/SKILL.md
+
+# General agents
+mkdir -p .agents/skills/handoff
+curl -fsSL $BASE/.agents/skills/handoff/SKILL.md -o .agents/skills/handoff/SKILL.md
+
+# Claude Code
+mkdir -p .claude/skills/handoff
+curl -fsSL $BASE/.claude/skills/handoff/SKILL.md -o .claude/skills/handoff/SKILL.md
 ```
 
 Once in place, the agent will automatically check for existing packages at the start of each session and offer to store context when things get long.
