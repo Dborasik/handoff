@@ -44,6 +44,51 @@ go build -o handoff .
 
 ---
 
+## Configuring Your Agent
+
+`handoff` works with any AI coding agent. To teach your agent how and when to use it, add the appropriate instruction file to your project. These files tell the agent to check for existing context at session start, proactively offer to store transfers, and use the correct command syntax.
+
+| Agent | File to add to your project |
+|-------|-----------------------------|
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| Claude Code | `CLAUDE.md` |
+| OpenAI Codex | `AGENTS.md` |
+| Cursor | `.cursor/rules/handoff.mdc` |
+
+Download whichever you need — all files are in this repo and contain identical instructions:
+
+```bash
+# GitHub Copilot
+mkdir -p .github
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.github/copilot-instructions.md \
+  -o .github/copilot-instructions.md
+
+# Claude Code
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/CLAUDE.md -o CLAUDE.md
+
+# OpenAI Codex
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/AGENTS.md -o AGENTS.md
+
+# Cursor
+mkdir -p .cursor/rules
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.cursor/rules/handoff.mdc \
+  -o .cursor/rules/handoff.mdc
+```
+
+Or grab all four at once:
+
+```bash
+mkdir -p .github .cursor/rules
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.github/copilot-instructions.md -o .github/copilot-instructions.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/CLAUDE.md -o CLAUDE.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/AGENTS.md -o AGENTS.md
+curl -fsSL https://raw.githubusercontent.com/Dborasik/handoff/main/.cursor/rules/handoff.mdc -o .cursor/rules/handoff.mdc
+```
+
+Once in place, the agent will automatically check for existing packages at the start of each session and offer to store context when things get long.
+
+---
+
 ## Quick Start
 
 **In Session A** — agent stores its context before the window fills:
