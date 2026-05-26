@@ -212,6 +212,22 @@ This is the intended usage pattern for AI coding agents:
 
 ---
 
+## Uninstall
+
+```bash
+brew uninstall handoff
+```
+
+This removes the binary. `handoff` also creates a data directory at `~/.handoff/` the first time it runs — Homebrew does not touch this. To remove it too:
+
+```bash
+rm -rf ~/.handoff
+```
+
+> **Note:** `~/.handoff/handoff.db` contains all your stored knowledge packages. Only delete it if you're sure you no longer need them. If you used a custom path via `HANDOFF_DB`, remove that file instead.
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
