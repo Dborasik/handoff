@@ -85,18 +85,18 @@ A skill is loaded by the agent only when relevant — lighter weight, and works 
 
 | Location in your project | Supported by |
 |--------------------------|-------------|
-| `.github/skills/handoff/SKILL.md` | GitHub Copilot, general agents |
-| `.agents/skills/handoff/SKILL.md` | General agents |
+| `.github/skills/handoff/SKILL.md` | GitHub Copilot |
+| `.agents/skills/handoff/SKILL.md` | OpenAI Codex and other agents |
 | `.claude/skills/handoff/SKILL.md` | Claude Code |
 
 ```bash
 BASE=https://raw.githubusercontent.com/Dborasik/handoff/main
 
-# GitHub Copilot / general
+# GitHub Copilot
 mkdir -p .github/skills/handoff
 curl -fsSL $BASE/.github/skills/handoff/SKILL.md -o .github/skills/handoff/SKILL.md
 
-# General agents
+# OpenAI Codex and other agents
 mkdir -p .agents/skills/handoff
 curl -fsSL $BASE/.agents/skills/handoff/SKILL.md -o .agents/skills/handoff/SKILL.md
 
