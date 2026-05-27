@@ -44,30 +44,24 @@ go install github.com/Dborasik/handoff@latest
 
 ## Quick Start
 
-**Session A** — store context before the window fills:
+**Session A** — your context is filling up.
 
-```bash
-echo "## Current State
-Auth is complete. Working on task CRUD.
+You say to the agent:
+> *"Our context is getting large. Do a handoff."*
 
-## Next Steps
-1. Finish PATCH /tasks/:id
-2. Add pagination to GET /tasks" | handoff store --name "api-state" --ttl 7d
-```
+The agent composes a structured summary of the current project state, stores it, and replies:
+> *"Done — stored as `a3f9c12e`. In the next session, say: 'retrieve handoff `a3f9c12e`' or 'retrieve the api-state package'."*
 
-```
-a3f9c12e
-```
+---
 
-**Session B** — retrieve context instantly:
+**Session B** — you start a fresh session with a new agent.
 
-```bash
-handoff retrieve a3f9c12e
-# or by name:
-handoff retrieve --name "api-state"
-```
+You say:
+> *"Retrieve knowledge package `a3f9c12e`."*
 
-The full context is written to stdout. The agent reads it and resumes work with no explanation from the user.
+The agent fetches the stored context and resumes exactly where you left off — no re-explaining the project, no lost decisions, no starting over.
+
+> The agent handles the `handoff store` and `handoff retrieve` commands internally. See the **[Commands reference](https://dborasik.github.io/handoff/commands/)** for details on what it runs.
 
 ---
 
