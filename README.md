@@ -50,7 +50,7 @@ You say to the agent:
 > *"Our context is getting large. Do a handoff."*
 
 The agent composes a structured summary of the current project state, stores it, and replies:
-> *"Done — stored as `a3f9c12e`. In the next session, say: 'retrieve handoff `a3f9c12e`' or 'retrieve the api-state package'."*
+> *"Done — stored as `a3f9c12e`."*
 
 ---
 
