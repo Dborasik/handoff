@@ -8,7 +8,8 @@
 
 === "Homebrew"
 
-    The recommended method on macOS and Linux. No Go toolchain required.
+    !!! info "macOS and Linux only"
+        Homebrew is not available on Windows. Windows users should use [Go install](#go-install) or a [pre-built binary](#pre-built-binaries).
 
     ```bash
     brew tap Dborasik/tap
@@ -23,38 +24,64 @@
 
 === "Go install"
 
-    !!! info "Requirement"
-        Requires Go 1.26 or later. Run `go version` to check. The binary is fully self-contained — no CGO, no system libraries.
+    Requires Go 1.26 or later. Run `go version` to check. The binary is fully self-contained — no CGO, no system libraries.
 
     ```bash
     go install github.com/Dborasik/handoff@latest
     ```
 
-    The binary is placed in `$GOPATH/bin` (typically `~/go/bin`). Make sure that directory is on your `$PATH`:
+    The binary is placed in your `GOPATH/bin` directory. Make sure that directory is on your `PATH`:
 
-    ```bash
-    export PATH="$PATH:$(go env GOPATH)/bin"
-    ```
+    === "macOS / Linux"
+
+        ```bash
+        export PATH="$PATH:$(go env GOPATH)/bin"
+        ```
+
+        Add this line to `~/.zshrc` or `~/.bashrc` to make it permanent.
+
+    === "Windows (PowerShell)"
+
+        ```powershell
+        # Add for current session
+        $env:PATH += ";$(go env GOPATH)\bin"
+
+        # Add permanently (user-level)
+        [Environment]::SetEnvironmentVariable(
+            "PATH",
+            $env:PATH + ";$(go env GOPATH)\bin",
+            "User"
+        )
+        ```
 
 === "Build from source"
+
+    Requires Go 1.26 or later.
 
     ```bash
     git clone https://github.com/Dborasik/handoff.git
     cd handoff
-    go build -o handoff .
     ```
 
-    Then move the binary somewhere on your `$PATH`:
+    === "macOS / Linux"
 
-    ```bash
-    mv handoff /usr/local/bin/
-    ```
+        ```bash
+        go build -o handoff .
+        mv handoff /usr/local/bin/
+        ```
+
+    === "Windows (PowerShell)"
+
+        ```powershell
+        go build -o handoff.exe .
+        Move-Item handoff.exe "$env:GOPATH\bin\handoff.exe"
+        ```
 
 ---
 
 ## Verify
 
-After installing, confirm the binary is on your PATH:
+After installing, confirm the binary is available:
 
 ```bash
 handoff --help
@@ -86,7 +113,7 @@ Use "handoff [command] --help" for more information about a command.
 
 ## Pre-built binaries
 
-Every [GitHub release](https://github.com/Dborasik/handoff/releases) includes pre-built archives. A `checksums.txt` file is included for verification.
+Every [GitHub release](https://github.com/Dborasik/handoff/releases) includes pre-built archives. A `checksums.txt` file is provided for verification.
 
 | Platform | Architecture | Archive |
 |----------|-------------|---------|
@@ -97,46 +124,94 @@ Every [GitHub release](https://github.com/Dborasik/handoff/releases) includes pr
 | Windows | x86-64 (amd64) | `handoff_windows_amd64.zip` |
 | Windows | ARM64 | `handoff_windows_arm64.zip` |
 
-**To use a pre-built binary:**
-
-=== "macOS / Linux"
+=== "macOS"
 
     ```bash
-    # Download and extract (example: macOS Apple Silicon)
+    # Apple Silicon
     curl -L https://github.com/Dborasik/handoff/releases/latest/download/handoff_darwin_arm64.tar.gz \
       | tar -xz
+    mv handoff /usr/local/bin/
 
-    # Move to a directory on your PATH
+    # Intel
+    curl -L https://github.com/Dborasik/handoff/releases/latest/download/handoff_darwin_amd64.tar.gz \
+      | tar -xz
     mv handoff /usr/local/bin/
     ```
 
-=== "Windows"
+=== "Linux"
 
-    Download the `.zip` from the [releases page](https://github.com/Dborasik/handoff/releases), extract it, and place `handoff.exe` in a directory that is on your `%PATH%`.
+    ```bash
+    # x86-64
+    curl -L https://github.com/Dborasik/handoff/releases/latest/download/handoff_linux_amd64.tar.gz \
+      | tar -xz
+    mv handoff /usr/local/bin/
+
+    # ARM64
+    curl -L https://github.com/Dborasik/handoff/releases/latest/download/handoff_linux_arm64.tar.gz \
+      | tar -xz
+    mv handoff /usr/local/bin/
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```powershell
+    # x86-64
+    Invoke-WebRequest `
+      -Uri https://github.com/Dborasik/handoff/releases/latest/download/handoff_windows_amd64.zip `
+      -OutFile handoff.zip
+    Expand-Archive handoff.zip -DestinationPath .
+    Move-Item handoff.exe "$env:GOPATH\bin\handoff.exe"
+
+    # ARM64
+    Invoke-WebRequest `
+      -Uri https://github.com/Dborasik/handoff/releases/latest/download/handoff_windows_arm64.zip `
+      -OutFile handoff.zip
+    Expand-Archive handoff.zip -DestinationPath .
+    Move-Item handoff.exe "$env:GOPATH\bin\handoff.exe"
+    ```
+
+    !!! tip
+        Move `handoff.exe` to any directory that is already on your `%PATH%`. If you are unsure, `$env:GOPATH\bin` is a good choice if you have Go installed. Otherwise use `C:\Windows\System32\` (requires admin) or create a dedicated `bin` folder in your home directory and add it to your user PATH.
 
 ---
 
 ## Uninstall
 
-=== "Homebrew"
+### Remove the binary
+
+=== "Homebrew (macOS / Linux)"
 
     ```bash
     brew uninstall handoff
     ```
 
-=== "Go install / manual"
+=== "Manual (macOS / Linux)"
 
     ```bash
     rm $(which handoff)
     ```
 
-After removing the binary, the data directory at `~/.handoff/` is left intact.
+=== "Windows (PowerShell)"
 
-!!! warning "Data directory"
-    `~/.handoff/handoff.db` contains all your stored knowledge packages. Delete it only if you are sure you no longer need them.
+    ```powershell
+    Remove-Item (Get-Command handoff).Source
+    ```
+
+### Remove stored packages
+
+The binary uninstall does not touch your stored packages. The data directory must be removed separately.
+
+=== "macOS / Linux"
 
     ```bash
     rm -rf ~/.handoff
     ```
 
-    If you used a custom database path via `HANDOFF_DB`, remove that file instead.
+=== "Windows (PowerShell)"
+
+    ```powershell
+    Remove-Item -Recurse -Force "$env:USERPROFILE\.handoff"
+    ```
+
+!!! warning "This permanently deletes all knowledge packages"
+    The database file contains all packages stored with `handoff store`. Only delete it if you are certain you no longer need them. If you used a custom path via `HANDOFF_DB`, remove that file instead.

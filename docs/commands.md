@@ -127,10 +127,29 @@ handoff retrieve --name "auth-design"
 
 # Save directly to a file
 handoff retrieve a3f9c12e > context.md
-
-# Pipe to clipboard (macOS)
-handoff retrieve --name "sprint-state" | pbcopy
 ```
+
+Pipe to clipboard:
+
+=== "macOS"
+
+    ```bash
+    handoff retrieve --name "sprint-state" | pbcopy
+    ```
+
+=== "Linux"
+
+    ```bash
+    handoff retrieve --name "sprint-state" | xclip -selection clipboard
+    # or
+    handoff retrieve --name "sprint-state" | xsel --clipboard
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```powershell
+    handoff retrieve --name "sprint-state" | clip
+    ```
 
 ### Errors
 

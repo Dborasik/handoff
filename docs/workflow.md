@@ -118,60 +118,119 @@ What is blocked and why.
 
 A complete, realistic knowledge package with all sections filled in:
 
-```bash
-handoff store \
-  --name "todo-api-state" \
-  --summary "Task CRUD in progress, auth complete, tests pending" \
-  --ttl 14d \
-  --project "todo-api" \
-  --tags "api,crud,auth,go" << 'EOF'
-## Context
-Building a REST API for a multi-user todo application.
-Stack: Go + Chi router + PostgreSQL.
-Goal: full CRUD for tasks with JWT authentication.
-Repo: github.com/example/todo-api
+=== "macOS / Linux (bash/zsh)"
 
-## Key Decisions
-- PostgreSQL over SQLite: needed for concurrent multi-user access
-- JWT auth: 15-min access tokens + 7-day refresh tokens in HttpOnly cookies
-- Chi router over Gin: lighter footprint, closer to the standard library
-- No ORM: using raw database/sql with pgx driver for clarity and control
+    ```bash
+    handoff store \
+      --name "todo-api-state" \
+      --summary "Task CRUD in progress, auth complete, tests pending" \
+      --ttl 14d \
+      --project "todo-api" \
+      --tags "api,crud,auth,go" << 'EOF'
+    ## Context
+    Building a REST API for a multi-user todo application.
+    Stack: Go + Chi router + PostgreSQL.
+    Goal: full CRUD for tasks with JWT authentication.
+    Repo: github.com/example/todo-api
 
-## Current State
-Complete:
-  - User registration and login
-  - JWT middleware (applied per-route, not globally)
-  - GET /tasks and POST /tasks
+    ## Key Decisions
+    - PostgreSQL over SQLite: needed for concurrent multi-user access
+    - JWT auth: 15-min access tokens + 7-day refresh tokens in HttpOnly cookies
+    - Chi router over Gin: lighter footprint, closer to the standard library
+    - No ORM: using raw database/sql with pgx driver for clarity and control
 
-In progress:
-  - PATCH /tasks/:id — handler exists, input validation not yet written
+    ## Current State
+    Complete:
+      - User registration and login
+      - JWT middleware (applied per-route, not globally)
+      - GET /tasks and POST /tasks
 
-Not started:
-  - DELETE /tasks/:id
-  - Pagination on GET /tasks
-  - Integration tests
+    In progress:
+      - PATCH /tasks/:id — handler exists, input validation not yet written
 
-Blocked: nothing currently blocked.
+    Not started:
+      - DELETE /tasks/:id
+      - Pagination on GET /tasks
+      - Integration tests
 
-## Next Steps
-1. Finish PATCH /tasks/:id — add validation with go-playground/validator
-2. Implement DELETE /tasks/:id
-3. Write integration tests using testcontainers-go
-4. Add cursor-based pagination to GET /tasks
+    Blocked: nothing currently blocked.
 
-## Warnings / Gotchas
-- Always run `make migrate` before testing — migrations live in /migrations/
-- JWT_SECRET env var must be set or the server panics on startup (see main.go:42)
-- The test database runs on port 5433, not 5432, to avoid conflicts with local Postgres
-- Refresh token rotation logic is in internal/auth/refresh.go, not middleware.go
+    ## Next Steps
+    1. Finish PATCH /tasks/:id — add validation with go-playground/validator
+    2. Implement DELETE /tasks/:id
+    3. Write integration tests using testcontainers-go
+    4. Add cursor-based pagination to GET /tasks
 
-## Files of Note
-- `internal/auth/middleware.go` — JWT validation middleware, applied per-route
-- `internal/auth/refresh.go` — refresh token rotation and revocation logic
-- `internal/task/handler.go` — all task HTTP handlers
-- `migrations/` — SQL migration files, applied in ascending filename order
-EOF
-```
+    ## Warnings / Gotchas
+    - Always run `make migrate` before testing — migrations live in /migrations/
+    - JWT_SECRET env var must be set or the server panics on startup (see main.go:42)
+    - The test database runs on port 5433, not 5432, to avoid conflicts with local Postgres
+    - Refresh token rotation logic is in internal/auth/refresh.go, not middleware.go
+
+    ## Files of Note
+    - `internal/auth/middleware.go` — JWT validation middleware, applied per-route
+    - `internal/auth/refresh.go` — refresh token rotation and revocation logic
+    - `internal/task/handler.go` — all task HTTP handlers
+    - `migrations/` — SQL migration files, applied in ascending filename order
+    EOF
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```powershell
+    @'
+    ## Context
+    Building a REST API for a multi-user todo application.
+    Stack: Go + Chi router + PostgreSQL.
+    Goal: full CRUD for tasks with JWT authentication.
+    Repo: github.com/example/todo-api
+
+    ## Key Decisions
+    - PostgreSQL over SQLite: needed for concurrent multi-user access
+    - JWT auth: 15-min access tokens + 7-day refresh tokens in HttpOnly cookies
+    - Chi router over Gin: lighter footprint, closer to the standard library
+    - No ORM: using raw database/sql with pgx driver for clarity and control
+
+    ## Current State
+    Complete:
+      - User registration and login
+      - JWT middleware (applied per-route, not globally)
+      - GET /tasks and POST /tasks
+
+    In progress:
+      - PATCH /tasks/:id — handler exists, input validation not yet written
+
+    Not started:
+      - DELETE /tasks/:id
+      - Pagination on GET /tasks
+      - Integration tests
+
+    Blocked: nothing currently blocked.
+
+    ## Next Steps
+    1. Finish PATCH /tasks/:id — add validation with go-playground/validator
+    2. Implement DELETE /tasks/:id
+    3. Write integration tests using testcontainers-go
+    4. Add cursor-based pagination to GET /tasks
+
+    ## Warnings / Gotchas
+    - Always run `make migrate` before testing — migrations live in /migrations/
+    - JWT_SECRET env var must be set or the server panics on startup (see main.go:42)
+    - The test database runs on port 5433, not 5432, to avoid conflicts with local Postgres
+    - Refresh token rotation logic is in internal/auth/refresh.go, not middleware.go
+
+    ## Files of Note
+    - `internal/auth/middleware.go` — JWT validation middleware, applied per-route
+    - `internal/auth/refresh.go` — refresh token rotation and revocation logic
+    - `internal/task/handler.go` — all task HTTP handlers
+    - `migrations/` — SQL migration files, applied in ascending filename order
+    '@ | handoff store `
+      --name "todo-api-state" `
+      --summary "Task CRUD in progress, auth complete, tests pending" `
+      --ttl 14d `
+      --project "todo-api" `
+      --tags "api,crud,auth,go"
+    ```
 
 The agent in Session B retrieves this package, reads it, and has everything needed to continue working on `PATCH /tasks/:id` without asking any clarifying questions.
 

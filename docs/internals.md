@@ -6,13 +6,23 @@ This page covers the internals of `handoff`: where data lives, how the database 
 
 ## Storage
 
-All data is stored in a single SQLite file:
+All data is stored in a single SQLite file. The location depends on your operating system:
 
-```text
-~/.handoff/handoff.db
-```
+=== "macOS / Linux"
 
-The `~/.handoff/` directory is created automatically (with permissions `0755`) the first time any `handoff` command runs. No setup step is required.
+    ```text
+    ~/.handoff/handoff.db
+    ```
+
+=== "Windows"
+
+    ```text
+    %USERPROFILE%\.handoff\handoff.db
+    ```
+
+    For example: `C:\Users\Alice\.handoff\handoff.db`
+
+The directory is created automatically the first time any `handoff` command runs. No setup step is required.
 
 `handoff` uses [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) — a pure-Go SQLite driver that bundles the SQLite engine directly into the binary. There is no CGO dependency and no requirement to have SQLite installed on the host system.
 
@@ -54,7 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_packages_expires_at
 :   Optional single-line description from `--summary`. Defaults to an empty string. Not used for lookup.
 
 `content`
-:   The full package body, stored verbatim as the text that was piped into `handoff store`.
+:   The full package body, stored verbatim as the text piped into `handoff store`.
 
 `tags`
 :   Stored as a JSON array string, e.g. `["auth","api","decisions"]`. Parsed from the comma-separated `--tags` value at store time.
@@ -130,24 +140,45 @@ Running `handoff gc` triggers the same deletion and reports how many rows were r
 
 `handoff` has exactly one configuration surface: an environment variable for the database path.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HANDOFF_DB` | `~/.handoff/handoff.db` | Path to the SQLite database file |
+| Variable | Default (macOS / Linux) | Default (Windows) |
+|----------|------------------------|-------------------|
+| `HANDOFF_DB` | `~/.handoff/handoff.db` | `%USERPROFILE%\.handoff\handoff.db` |
 
 There is no config file. No other settings exist.
 
-**Examples:**
+=== "macOS / Linux"
 
-```bash
-# Use a temporary database for a throwaway session
-HANDOFF_DB=/tmp/scratch.db handoff store --name "temp" --ttl 2h
+    ```bash
+    # Use a temporary database for a throwaway session (inline)
+    HANDOFF_DB=/tmp/scratch.db handoff store --name "temp" --ttl 2h
 
-# Keep the database alongside the project
-export HANDOFF_DB="$(pwd)/.handoff.db"
+    # Set for the current shell session
+    export HANDOFF_DB="$(pwd)/.handoff.db"
 
-# Use a shared path on a team machine
-export HANDOFF_DB=/var/shared/handoff.db
-```
+    # Use a shared path
+    export HANDOFF_DB=/var/shared/handoff.db
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```powershell
+    # Use a temporary database for a throwaway session
+    $env:HANDOFF_DB = "C:\Temp\scratch.db"
+    handoff store --name "temp" --ttl 2h
+
+    # Set for the current shell session
+    $env:HANDOFF_DB = "$PWD\.handoff.db"
+
+    # Use a shared path
+    $env:HANDOFF_DB = "C:\Shared\handoff.db"
+    ```
+
+=== "Windows (CMD)"
+
+    ```cmd
+    set HANDOFF_DB=C:\Temp\scratch.db
+    handoff store --name "temp" --ttl 2h
+    ```
 
 ---
 
@@ -161,30 +192,3 @@ export HANDOFF_DB=/var/shared/handoff.db
 4. **Stdin/stdout.** Content flows through pipes. This is the natural interface for agents working in a terminal, and it makes `handoff` composable with other tools.
 5. **Ephemeral by default.** TTL ensures stored context eventually disappears. Old packages do not accumulate forever.
 6. **Simple over clever.** No plugin system, no network layer, no authentication, no daemon. A single SQLite file is the entire data layer.
-
----
-
-## Uninstall
-
-=== "Homebrew"
-
-    ```bash
-    brew uninstall handoff
-    ```
-
-    This removes the binary. The data directory at `~/.handoff/` is left intact — Homebrew does not touch it.
-
-=== "Go install / manual"
-
-    ```bash
-    rm $(which handoff)
-    ```
-
-**To also remove stored packages:**
-
-```bash
-rm -rf ~/.handoff
-```
-
-!!! warning "This is irreversible"
-    `~/.handoff/handoff.db` contains all your stored knowledge packages. Only delete it if you are certain you no longer need them. If you used a custom path via `HANDOFF_DB`, remove that file instead.

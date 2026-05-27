@@ -4,6 +4,9 @@ For `handoff` to be useful, your agent needs to know it exists. This page explai
 
 There are two approaches. Choose based on how often you expect to use `handoff` in the project:
 
+!!! info "Windows users"
+    The `curl` commands below use standard flags that work with `curl.exe` on Windows 10+. In PowerShell, `curl` is an alias for `Invoke-WebRequest` — use `curl.exe` explicitly to invoke the real curl binary. The `mkdir -p` flag is not needed on Windows; use `mkdir` without it (PowerShell's `mkdir` creates intermediate directories and does not error if the directory already exists).
+
 | | Option A — Always-on | Option B — Skill file |
 |--|---|---|
 | **When loaded** | Every session, automatically | Only when the agent judges it relevant |
