@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-When an AI agent's context window fills up, accumulated project knowledge is lost.<br>
-<code>handoff</code> lets agents <strong>store</strong> structured knowledge packages to a local SQLite database and <strong>retrieve</strong> them in the next session — no cloud, no config, no server.
+<strong>When an AI agent's context window fills up, accumulated project knowledge is lost.</strong> <code>handoff</code> lets agents <strong>store</strong> structured knowledge packages to a local SQLite database and <strong>retrieve</strong> them in the next session — no cloud, no config, no server.
 </p>
 
 <p align="center">
