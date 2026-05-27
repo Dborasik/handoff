@@ -1,42 +1,33 @@
 # handoff
 
-**When an AI agent's context window fills up, accumulated project knowledge is lost.** `handoff` lets agents store structured knowledge packages to a local SQLite database and retrieve them in the next session — no cloud, no server, no configuration required.
+> **Transfer knowledge between AI agent sessions — local SQLite, no cloud, no server, no configuration.**
 
-![Session A stores to handoff.db; Session B retrieves from handoff.db](https://raw.githubusercontent.com/Dborasik/handoff/main/assets/flow.png)
+Every AI coding agent operates inside a finite context window. When that window fills up, the session ends and everything accumulated during it — decisions made, architecture discussed, progress tracked, gotchas discovered — is gone. The next agent starts from zero.
 
----
+`handoff` solves this. Before the window closes, the agent stores a structured markdown summary to a local SQLite database. The next agent retrieves it and resumes work with full context, instantly.
 
-## The problem
-
-Every AI coding agent — Claude Code, GitHub Copilot, Cursor, OpenAI Codex — works inside a finite context window. When that window fills up, the user must start a fresh session. Any decisions made, architecture discussed, progress tracked, or gotchas discovered during the session is gone.
-
-`handoff` fixes this. Before the window closes, the agent stores a structured markdown summary to a local SQLite database. In the next session, a fresh agent retrieves that summary and picks up exactly where the previous one left off.
+![handoff flow diagram — Session A stores to handoff.db, Session B retrieves from handoff.db](https://raw.githubusercontent.com/Dborasik/handoff/main/assets/flow.png)
 
 ---
 
 ## Quick start
 
-**Session A** — agent stores its context before the window fills:
+**Session A** — store context before the window fills:
 
 ```bash
-echo "## Context
-Building a REST API. Stack: Go + Chi + PostgreSQL.
-
-## Current State
-Auth complete. Working on task CRUD.
+echo "## Current State
+Auth is complete. Working on task CRUD.
 
 ## Next Steps
 1. Finish PATCH /tasks/:id
 2. Add pagination to GET /tasks" | handoff store --name "api-state" --ttl 7d
 ```
 
-Output:
-
-```
+```text
 a3f9c12e
 ```
 
-**Session B** — fresh agent retrieves the context instantly:
+**Session B** — fresh agent retrieves it immediately:
 
 ```bash
 handoff retrieve a3f9c12e
@@ -44,26 +35,100 @@ handoff retrieve a3f9c12e
 handoff retrieve --name "api-state"
 ```
 
-That's it. The agent reads the stored markdown and resumes work with full context.
+The full context is written to stdout. The agent reads it and picks up where the last session left off.
 
 ---
 
-## Key properties
+## How it fits together
 
-| Property | Detail |
-|----------|--------|
-| **Local-only** | All data lives in `~/.handoff/handoff.db` on your machine |
-| **No daemon** | No background process, no server, no network calls |
-| **Single binary** | Pure Go — one executable, no runtime dependencies |
-| **Auto-expiry** | Packages expire by TTL; old context never accumulates forever |
-| **Cross-platform** | macOS, Linux, Windows — amd64 and arm64 |
+<div class="grid cards" markdown>
+
+-   :material-database-outline: **Local SQLite**
+
+    ---
+
+    All data lives in `~/.handoff/handoff.db` on your own machine. Nothing leaves your system. No accounts, no API keys, no internet connection required.
+
+-   :material-timer-sand: **Auto-expiry**
+
+    ---
+
+    Every package has a TTL. Packages expire silently in the background — old context never accumulates. Default TTL is 7 days.
+
+-   :material-package-variant: **Single binary**
+
+    ---
+
+    Pure Go, no CGO, no runtime dependencies. One executable that works the same on macOS, Linux, and Windows.
+
+-   :material-robot-outline: **Works with all major agents**
+
+    ---
+
+    Ready-made instruction files for Claude Code, GitHub Copilot, Cursor, and OpenAI Codex. Drop one file into your project and the agent handles the rest.
+
+</div>
 
 ---
 
-## Next steps
+## Supported agents
 
-- [Install](install.md) — Homebrew, `go install`, or build from source
-- [Commands](commands.md) — full CLI reference: `store`, `retrieve`, `list`, `gc`
-- [Agent Setup](agents.md) — how to wire `handoff` into your agent's instructions
-- [Workflow](workflow.md) — the recommended handoff workflow and package format
-- [How It Works](internals.md) — storage, TTL, IDs, database schema
+`handoff` ships instruction files for every major AI coding agent:
+
+| Agent | Supported |
+|-------|-----------|
+| Claude Code | :material-check-circle: Yes |
+| GitHub Copilot | :material-check-circle: Yes |
+| Cursor | :material-check-circle: Yes |
+| OpenAI Codex | :material-check-circle: Yes |
+| Any agent with terminal access | :material-check-circle: Yes |
+
+See [Agent Setup](agents.md) for installation instructions.
+
+---
+
+## Explore the docs
+
+<div class="grid cards" markdown>
+
+-   :material-download: **Install**
+
+    ---
+
+    Homebrew, `go install`, or build from source.
+
+    [:octicons-arrow-right-24: Install](install.md)
+
+-   :material-console: **Commands**
+
+    ---
+
+    Full reference for `store`, `retrieve`, `list`, and `gc`.
+
+    [:octicons-arrow-right-24: Commands](commands.md)
+
+-   :material-robot: **Agent Setup**
+
+    ---
+
+    Wire `handoff` into your agent's instructions in one `curl` command.
+
+    [:octicons-arrow-right-24: Agent Setup](agents.md)
+
+-   :material-source-branch: **Workflow**
+
+    ---
+
+    The recommended handoff pattern and knowledge package format.
+
+    [:octicons-arrow-right-24: Workflow](workflow.md)
+
+-   :material-cog-outline: **How It Works**
+
+    ---
+
+    Database schema, ID generation, TTL, garbage collection, and design principles.
+
+    [:octicons-arrow-right-24: How It Works](internals.md)
+
+</div>

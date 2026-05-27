@@ -1,48 +1,62 @@
 # Commands
 
-`handoff` has four subcommands. All of them share the same database, located at `~/.handoff/handoff.db` by default (see [Configuration](internals.md#configuration)).
+`handoff` has four subcommands. All of them operate on the same SQLite database, located at `~/.handoff/handoff.db` by default (configurable via [`HANDOFF_DB`](internals.md#configuration)).
+
+| Command | Description |
+|---------|-------------|
+| [`store`](#handoff-store) | Read content from stdin and save it as a named knowledge package |
+| [`retrieve`](#handoff-retrieve) | Fetch a package by ID or name and write its content to stdout |
+| [`list`](#handoff-list) | List all non-expired packages in a table |
+| [`gc`](#handoff-gc) | Manually delete all expired packages |
 
 ---
 
-## `handoff store`
+## handoff store
 
-Reads content from stdin and stores it as a named knowledge package. On success, prints the package ID — an 8-character lowercase hex string — to stdout.
+Reads content from stdin and saves it as a named knowledge package. On success, prints the package ID to stdout.
 
 ```bash
-echo "<content>" | handoff store --name <name> [options]
+echo "<content>" | handoff store --name <name> [flags]
 ```
 
 ### Flags
 
-| Flag | Required | Default | Description |
-|------|----------|---------|-------------|
-| `--name` | **Yes** | — | Name for the package. Used to retrieve it by name later. |
-| `--summary` | No | — | A short one-line description of the package contents. |
-| `--ttl` | No | `7d` | How long the package lives before it expires. Format: a positive integer followed by `h` (hours) or `d` (days). |
-| `--project` | No | — | A project scoping key. Use consistently across a project to group related packages. |
-| `--tags` | No | — | Comma-separated tags, e.g. `auth,api,decisions`. Leading and trailing whitespace is trimmed from each tag. |
+`--name` *(required)*
+:   A short, descriptive name for the package. Used to retrieve it by name in a future session. Names are **not unique** — multiple packages can share the same name. `retrieve --name` always returns the most recently stored match.
+
+`--summary`
+:   A single-line human-readable description of the package contents. Optional. Not used for lookup, only for display in `list` output.
+
+`--ttl` *(default: `7d`)*
+:   How long the package lives before it is automatically deleted. Format: a positive integer followed by `h` (hours) or `d` (days). Examples: `2h`, `1d`, `7d`, `14d`, `30d`. Cannot be changed after the package is stored.
+
+`--project`
+:   An optional project scoping key. Use the same key consistently across a project to group related packages together. Used as a filter in `handoff list --project`.
+
+`--tags`
+:   Optional comma-separated labels. Leading and trailing whitespace is trimmed from each tag. Example: `auth,api,decisions`.
 
 ### Content
 
-Content is always read from stdin. The command exits with an error if stdin is empty or contains only whitespace. There is no flag for passing content inline.
+Content is always read from stdin — there is no inline flag for it. The command exits with an error if stdin is empty or contains only whitespace.
 
 ### Output
 
-On success, the package ID is printed to stdout followed by a newline:
+On success, the package ID is printed to stdout:
 
-```
+```text
 a3f9c12e
 ```
 
-Report this ID to the user so they can retrieve the package by ID in the next session.
+The ID is an 8-character lowercase hex string. Always pass this back to the user so they can retrieve the package by ID in the next session.
 
 ### Examples
 
 ```bash
-# Minimal — just name and content
-echo "context notes..." | handoff store --name "scratch"
+# Minimal store
+echo "notes about current state" | handoff store --name "scratch"
 
-# Full options
+# With all options
 cat notes.md | handoff store \
   --name "auth-design" \
   --summary "JWT auth architecture decisions" \
@@ -50,7 +64,7 @@ cat notes.md | handoff store \
   --project "myapp" \
   --tags "auth,api,decisions"
 
-# Multi-line content using a heredoc
+# Using a heredoc for multi-line content
 handoff store --name "sprint-state" --ttl 7d --project "myapp" << 'EOF'
 ## Current State
 Feature X is complete. Feature Y is in progress.
@@ -61,23 +75,20 @@ Feature X is complete. Feature Y is in progress.
 EOF
 ```
 
-### TTL reference
+### Errors
 
-| Value | Duration |
-|-------|----------|
-| `2h` | 2 hours |
-| `1d` | 1 day |
-| `7d` | 7 days (default) |
-| `14d` | 14 days |
-| `30d` | 30 days |
-
-TTL is specified at store time and cannot be changed after the fact. If a package expires before you retrieve it, it is deleted and no longer accessible.
+| Error | Cause |
+|-------|-------|
+| `Error: --name is required` | The `--name` flag was omitted |
+| `Error: no content provided on stdin` | Stdin was empty or whitespace-only |
+| `Error: invalid --ttl: unsupported unit 'X' (use h or d)` | TTL unit was not `h` or `d` |
+| `Error: invalid --ttl: must be positive` | TTL value was `0` or negative |
 
 ---
 
-## `handoff retrieve`
+## handoff retrieve
 
-Retrieves a package and writes its content to stdout. Lookup is by ID or by name.
+Retrieves a package and writes its content to stdout. Lookup is by package ID or by name.
 
 ```bash
 handoff retrieve <id>
@@ -86,16 +97,22 @@ handoff retrieve --name <name>
 
 ### Arguments
 
-| Form | Description |
-|------|-------------|
-| `handoff retrieve <id>` | Retrieve by exact 8-character hex package ID. |
-| `handoff retrieve --name <name>` | Retrieve by name. If multiple packages share the same name, the most recently stored one is returned. |
+`<id>` *(positional)*
+:   The exact 8-character hex package ID returned by `store`. ID lookup is precise — there are no partial matches.
 
-At least one of a positional ID argument or `--name` must be provided. If neither is given, the command exits with an error.
+`--name`
+:   Retrieve by package name. If multiple packages share the same name, the most recently stored one is returned. An expired package with that name is never returned.
+
+!!! note "One or the other"
+    You must provide either a positional ID argument or `--name`. Providing both is not an error — the positional ID takes priority.
 
 ### Output
 
-The package content is written to stdout exactly as it was stored. No trailing newline is added beyond what the original content contained. If no package matches, the command exits with a non-zero status and prints `package not found` to stderr.
+The full package content is written to stdout exactly as it was stored. No metadata is added. Use shell redirection to save it to a file:
+
+```bash
+handoff retrieve --name "auth-design" > context.md
+```
 
 ### Examples
 
@@ -103,19 +120,26 @@ The package content is written to stdout exactly as it was stored. No trailing n
 # Retrieve by ID
 handoff retrieve a3f9c12e
 
-# Retrieve by name
+# Retrieve by name (returns most recent if name is reused)
 handoff retrieve --name "auth-design"
 
-# Pipe content into a file for review
-handoff retrieve --name "sprint-state" > context.md
+# Save to file
+handoff retrieve a3f9c12e > context.md
 
-# Pipe content to another tool
-handoff retrieve a3f9c12e | pbcopy
+# Pipe to clipboard (macOS)
+handoff retrieve --name "sprint-state" | pbcopy
 ```
+
+### Errors
+
+| Error | Cause |
+|-------|-------|
+| `Error: provide a package ID as argument or use --name` | Neither a positional ID nor `--name` was provided |
+| `Error: package not found` | No non-expired package matched the given ID or name |
 
 ---
 
-## `handoff list`
+## handoff list
 
 Lists all non-expired packages in a tab-aligned table, ordered from most recently stored to oldest.
 
@@ -126,19 +150,16 @@ handoff list --project <key>
 
 ### Flags
 
-| Flag | Description |
-|------|-------------|
-| `--project` | Filter the results to packages matching the given project key. If omitted, all non-expired packages are shown. |
+`--project`
+:   Filter the listing to packages that match the given project key. If omitted, all non-expired packages are shown.
 
 ### Output
 
-```
+```text
 ID        NAME           PROJECT   TAGS          EXPIRES
 a3f9c12e  auth-design    myapp     auth,api      2026-06-09 14:30
 b1d2e3f4  db-schema      myapp     db,postgres   2026-06-02 09:15
 ```
-
-Columns:
 
 | Column | Description |
 |--------|-------------|
@@ -146,9 +167,10 @@ Columns:
 | `NAME` | Package name as given at store time |
 | `PROJECT` | Project key, if set |
 | `TAGS` | Comma-separated tags, if set |
-| `EXPIRES` | Expiry timestamp in local time, formatted as `YYYY-MM-DD HH:MM` |
+| `EXPIRES` | Expiry timestamp formatted as `YYYY-MM-DD HH:MM` |
 
-If no packages exist (or none match the project filter), the message `No packages found.` is printed to stderr and the command exits successfully.
+!!! info "Empty results"
+    If no packages exist (or none match the project filter), `No packages found.` is printed to stderr and the command exits with status `0`.
 
 ### Examples
 
@@ -162,17 +184,23 @@ handoff list --project myapp
 
 ---
 
-## `handoff gc`
+## handoff gc
 
-Manually removes all expired packages from the database and prints how many were deleted.
+Manually removes all expired packages from the database and prints the count deleted.
 
 ```bash
 handoff gc
-# Removed 3 expired package(s).
 ```
 
-### When to use it
+```text
+Removed 3 expired package(s).
+```
 
-You generally do not need to run this command. Expired packages are automatically deleted on every database operation — whenever you run `store`, `retrieve`, `list`, or `gc`. Expired packages cannot be retrieved; they are simply taking up space on disk.
+### When to run it
 
-Run `handoff gc` explicitly if you want to reclaim disk space immediately, or to confirm how many stale packages have been cleaned up.
+You generally do not need to run `handoff gc` explicitly. Expired packages are automatically deleted at the start of every database operation — whenever any `handoff` command runs. An expired package cannot be retrieved regardless of whether `gc` has been run.
+
+Run `handoff gc` when you want to:
+
+- Confirm how many stale packages have accumulated
+- Reclaim disk space immediately rather than waiting for the next natural operation

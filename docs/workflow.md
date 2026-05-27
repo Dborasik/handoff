@@ -1,75 +1,84 @@
 # Workflow
 
-This page covers the full handoff workflow — when to do it, how the two sessions coordinate, and how to structure the content of a knowledge package so the next agent can resume immediately.
+A handoff involves two sessions. Session A stores context before its window is exhausted. Session B retrieves that context and resumes work immediately. This page covers how those two sessions coordinate, how to structure the content of a package, and a complete worked example.
 
 ---
 
-## The handoff workflow
-
-A handoff involves two sessions: one that stores context, and one that retrieves it.
+## The two-session pattern
 
 ### Session A — storing context
 
-1. **The trigger.** The user notices the context is getting long and says something like: *"Do a knowledge transfer before we lose context."* The agent can also offer proactively when it notices its context filling up.
+!!! example "Trigger phrases"
+    These phrases all mean the same thing to an agent with `handoff` instructions: *compose and store a knowledge package right now.*
 
-2. **The agent composes a summary.** The agent writes a structured markdown document covering the current project state — what was decided, what is done, what is in progress, what comes next, and any important warnings.
+    `"do a handoff"` · `"save context"` · `"knowledge transfer"` · `"store session state"` · `"hand off to next agent"`
 
-3. **The agent runs `handoff store`.**
+**Step 1 — The agent composes a summary.**
+The agent writes a structured markdown document covering the current project state: what was decided, what is done, what is in progress, what comes next, and any gotchas to be aware of. See [Package structure](#package-structure) below for the recommended format.
 
-    ```bash
-    echo '<summary>' | handoff store \
-      --name "project-state" \
-      --summary "One-line description of the current state" \
-      --ttl 14d \
-      --project "myapp" \
-      --tags "relevant,tags"
-    ```
+**Step 2 — The agent stores it.**
 
-4. **The agent reports the ID.** The command prints an 8-character hex ID (e.g. `a3f9c12e`). The agent tells the user: *"Stored as `a3f9c12e`. In the next session, retrieve it with `handoff retrieve a3f9c12e` or `handoff retrieve --name project-state`."*
+```bash
+echo '<summary>' | handoff store \
+  --name "project-state" \
+  --summary "One-line description of current state" \
+  --ttl 14d \
+  --project "myapp"
+```
 
-### Session B — retrieving context
+**Step 3 — The agent reports the ID.**
+The command prints an 8-character hex ID. The agent passes it back to the user:
 
-1. **The user starts a fresh session.** The fresh agent has no prior context.
-
-2. **The agent checks for packages.** With [always-on instructions](agents.md) in place, the agent automatically runs `handoff list` at session start to see what is available:
-
-    ```bash
-    handoff list
-    handoff list --project myapp
-    ```
-
-3. **The agent retrieves the package.**
-
-    ```bash
-    handoff retrieve a3f9c12e
-    # or by name:
-    handoff retrieve --name "project-state"
-    ```
-
-4. **The agent reads the content and resumes.** It now has full context and can continue work without any explanation from the user.
+> *"Stored as `a3f9c12e`. In the next session, retrieve it with `handoff retrieve a3f9c12e` or `handoff retrieve --name project-state`."*
 
 ---
 
-## Knowledge package format
+### Session B — retrieving context
 
-`handoff` does not enforce any structure on the content — it stores whatever markdown text you pipe in. However, a consistent structure makes the stored context much more useful to the agent reading it in the next session.
+**Step 1 — Check what's available.**
+With [always-on instructions](agents.md) in place, the agent does this automatically. It can also be triggered manually:
 
-The recommended format:
+```bash
+handoff list
+handoff list --project myapp
+```
+
+**Step 2 — Retrieve the package.**
+
+```bash
+# By ID (exact, always returns the right package)
+handoff retrieve a3f9c12e
+
+# By name (returns the most recently stored package with that name)
+handoff retrieve --name "project-state"
+```
+
+**Step 3 — Resume work.**
+The agent reads the content and has full context. No explanation from the user required.
+
+---
+
+## Package structure
+
+`handoff` does not enforce any content structure — it stores whatever markdown you pipe in. The format below is a recommended template. It is designed around one principle: **the agent reading this package in the next session has no other context**. Write for that reader.
 
 ```markdown
 ## Context
-What this project is and what we are currently building. Include the tech stack,
-the overall goal, and any background the next agent needs to understand the project.
+What this project is and what we are currently building.
+Include the tech stack, the overall goal, and any background
+a new agent needs to understand the project from scratch.
 
 ## Key Decisions
-- Decision made: rationale and any alternatives that were considered
-- Decision made: rationale and any alternatives that were considered
+- Decision: rationale and any alternatives that were considered
+- Decision: rationale and any alternatives that were considered
 
 ## Current State
-What is fully complete. What is currently in progress. What is blocked and why.
+What is fully complete.
+What is currently in progress and how far along it is.
+What is blocked and why.
 
 ## Next Steps
-1. First concrete action to take
+1. First concrete action to take (specific, not vague)
 2. Second concrete action to take
 3. Third concrete action to take
 
@@ -85,23 +94,29 @@ What is fully complete. What is currently in progress. What is blocked and why.
 
 ### Why each section matters
 
-**Context** — A fresh agent knows nothing. Don't assume it has seen the README or explored the codebase. Describe the project as if briefing someone for the first time.
+**Context**
+:   A fresh agent knows nothing about your project. Don't assume it has read the README or explored the codebase. Describe the project as if briefing someone for the first time.
 
-**Key Decisions** — The most overlooked section. Decisions made during the session (technology choices, API design, trade-offs) exist only in the conversation. Without this section, the next agent may re-examine or reverse them.
+**Key Decisions**
+:   The most overlooked section. Architectural choices made during the session — technology selections, API design, trade-offs accepted — exist only in the conversation. Without documenting them, the next agent may re-examine or silently reverse decisions that were already settled.
 
-**Current State** — Distinguishes what is production-ready from what is half-done. The next agent needs to know where the work boundary is.
+**Current State**
+:   Distinguishes what is production-ready from what is half-done. The next agent needs to know exactly where the work boundary is before writing a single line.
 
-**Next Steps** — Ordered, specific actions. Not vague goals but concrete steps: "Add input validation to `PATCH /tasks/:id` using `go-playground/validator`", not "fix tasks endpoint".
+**Next Steps**
+:   Write specific, actionable items — not vague goals. *"Add input validation to `PATCH /tasks/:id` using `go-playground/validator`"* is useful. *"Fix the tasks endpoint"* is not.
 
-**Warnings / Gotchas** — Traps that cost time to rediscover. Include anything that is non-obvious, environment-specific, or that caused confusion during the session.
+**Warnings / Gotchas**
+:   Traps that cost time to rediscover. Include anything non-obvious, environment-specific, or that caused confusion during the session. This section has a disproportionate impact on the quality of the next session.
 
-**Files of Note** — The next agent will likely explore the codebase. Point it directly to the relevant files so it does not have to infer them from the structure.
+**Files of Note**
+:   The next agent will explore the codebase. Point it directly to the relevant files so it doesn't have to infer them from the directory structure.
 
 ---
 
 ## Full example
 
-This is what a complete, real-world knowledge package looks like:
+A complete, realistic knowledge package with all sections filled in:
 
 ```bash
 handoff store \
@@ -118,37 +133,37 @@ Repo: github.com/example/todo-api
 
 ## Key Decisions
 - PostgreSQL over SQLite: needed for concurrent multi-user access
-- JWT auth: 15-min access tokens + 7-day refresh tokens stored in HttpOnly cookies
-- Chi router over Gin: lighter footprint, closer to standard library
+- JWT auth: 15-min access tokens + 7-day refresh tokens in HttpOnly cookies
+- Chi router over Gin: lighter footprint, closer to the standard library
 - No ORM: using raw database/sql with pgx driver for clarity and control
 
 ## Current State
 Complete:
-- User registration and login
-- JWT middleware (applied per-route, not globally)
-- GET /tasks and POST /tasks
+  - User registration and login
+  - JWT middleware (applied per-route, not globally)
+  - GET /tasks and POST /tasks
 
 In progress:
-- PATCH /tasks/:id — handler exists, input validation not yet written
+  - PATCH /tasks/:id — handler exists, input validation not yet written
 
 Not started:
-- DELETE /tasks/:id
-- Pagination on GET /tasks
-- Integration tests
+  - DELETE /tasks/:id
+  - Pagination on GET /tasks
+  - Integration tests
 
 Blocked: nothing currently blocked.
 
 ## Next Steps
-1. Finish PATCH /tasks/:id — add validation using go-playground/validator
+1. Finish PATCH /tasks/:id — add validation with go-playground/validator
 2. Implement DELETE /tasks/:id
 3. Write integration tests using testcontainers-go
 4. Add cursor-based pagination to GET /tasks
 
 ## Warnings / Gotchas
-- DB migrations live in /migrations — always run `make migrate` before testing
+- Always run `make migrate` before testing — migrations live in /migrations/
 - JWT_SECRET env var must be set or the server panics on startup (see main.go:42)
 - The test database runs on port 5433, not 5432, to avoid conflicts with local Postgres
-- The refresh token rotation logic is in internal/auth/refresh.go, not middleware.go
+- Refresh token rotation logic is in internal/auth/refresh.go, not middleware.go
 
 ## Files of Note
 - `internal/auth/middleware.go` — JWT validation middleware, applied per-route
@@ -158,4 +173,17 @@ Blocked: nothing currently blocked.
 EOF
 ```
 
-The agent in Session B retrieves this, reads it, and has everything it needs to continue working on `PATCH /tasks/:id` without asking any questions.
+The agent in Session B retrieves this package, reads it, and has everything needed to continue working on `PATCH /tasks/:id` without asking any clarifying questions.
+
+---
+
+## Tips
+
+!!! tip "Store early, not just when full"
+    Don't wait until the context window is completely exhausted. A package stored with 20% headroom is more coherent and easier for the next agent to act on than one written under pressure at the very limit.
+
+!!! tip "Reuse names intentionally"
+    Package names are not unique. You can store a new package under the same name as a previous one — `retrieve --name` will always return the most recent. Use this to maintain a single "current state" name per project that gets overwritten on each transfer, while keeping older snapshots accessible by ID.
+
+!!! tip "Use --project consistently"
+    Setting `--project` to the repository or app name on every store makes `handoff list --project <name>` immediately useful. Without it, all packages from all projects appear together in `list` output.
