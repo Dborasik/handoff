@@ -44,7 +44,7 @@ go install github.com/Dborasik/handoff@latest
 
 ## Quick Start
 
-**Session A** — your context is filling up.
+### Session A — your context is filling up
 
 You say to the agent:
 > *"Our context is getting large. Do a handoff."*
@@ -52,9 +52,7 @@ You say to the agent:
 The agent composes a structured summary of the current project state, stores it, and replies:
 > *"Done — stored as `a3f9c12e`."*
 
----
-
-**Session B** — you start a fresh session with a new agent.
+### Session B — you start a fresh session with a new agent
 
 You say:
 > *"Retrieve knowledge package `a3f9c12e`."*
